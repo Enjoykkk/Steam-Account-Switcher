@@ -1,0 +1,23 @@
+{
+  "accounts": [
+    {
+      "label": "Основной",
+      "login": "my_steam_login",
+      "password": "my_password",
+      "mafile": "mafiles/main.maFile",
+      "guard_source": "mafile"
+    },
+    {
+      "label": "Торговый",
+      "login": "trader_login",
+      "password": "trader_password",
+      "mafile": null,
+      "guard_source": "nebula",
+      "nebula_account_name": null
+    }
+  ],
+  "settings": {
+    "chrome_profiles_dir": "chrome_profiles",
+    "nebula_auth_path": "C:\\Program Files\\NebulaAuth\\NebulaAuth.exe"
+  }
+}
