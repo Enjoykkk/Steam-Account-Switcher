@@ -54,6 +54,10 @@ E:\proj1\
 - **Windows 10/11** — `pywinauto` для интеграции с NebulaAuth работает только на Windows.
 - **NebulaAuth** (опционально) — нужен только если используешь `guard_source: nebula`.
 
+> **NebulaAuth** — стороннее приложение от achies.
+> Этот проект не включает и не распространяет NebulaAuth — только автоматизирует
+> взаимодействие с ним через Windows UI Automation API и буфер обмена.
+
 ---
 
 ## Установка
