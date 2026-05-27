@@ -65,15 +65,36 @@ proj1/
 
 ## Installation
 
-1. **Place the project** in any folder (e.g. `E:\proj1\`).
-2. **Install dependencies:**
-   ```powershell
-   pip install -r requirements.txt
-   ```
-3. **Create a Desktop shortcut** (optional):
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File E:\proj1\create_shortcut.ps1
-   ```
+### 1. Download the project
+
+Go to the [Releases](https://github.com/alabaster246/Steam-Account-Switcher/releases/latest)
+page, download `Steam.Account.Switcher.zip`, and extract it to any folder (e.g. `E:\proj1\`).
+
+Or clone the repository via git:
+```powershell
+git clone https://github.com/alabaster246/Steam-Account-Switcher.git E:\proj1
+```
+
+### 2. Install Python and dependencies
+
+Make sure **Python 3.10+** is installed ([python.org](https://python.org/downloads)).
+Then install the required packages:
+```powershell
+pip install -r E:\proj1\requirements.txt
+```
+
+### 3. Create a Desktop shortcut
+
+Run the PowerShell script — it will create a **Steam Switcher** shortcut on your Desktop
+that launches the program without a console window:
+```powershell
+powershell -ExecutionPolicy Bypass -File E:\proj1\create_shortcut.ps1
+```
+
+Or run the program directly:
+```powershell
+python E:\proj1\main.py
+```
 
 ---
 
