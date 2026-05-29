@@ -1,7 +1,3 @@
-"""Запусти этот скрипт, дойди руками до экрана 'Use the Steam Mobile App',
-останови программу клавишей Enter в консоли — она напечатает HTML
-ссылки 'Enter a code instead'. Скинь вывод, пойму почему она не кликается."""
-
 import sys
 from pathlib import Path
 
