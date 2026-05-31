@@ -1,15 +1,3 @@
-"""Диагностика интерфейса клиента Steam для построения автоматизации.
-
-КАК ПОЛЬЗОВАТЬСЯ:
-  1. Открой нужный экран Steam вручную (форма логина / "Кто играет?" / Steam Guard).
-  2. Запусти:  python debug_steam_client.py
-  3. Скрипт запишет результат в файл steam_dump.txt (UTF-8) рядом со скриптом.
-  4. Пришли содержимое steam_dump.txt.
-
-Окно интерфейса Steam принадлежит процессу steamwebhelper.exe (Chromium), а не
-steam.exe — скрипт это учитывает.
-"""
-
 import sys
 from pathlib import Path
 
