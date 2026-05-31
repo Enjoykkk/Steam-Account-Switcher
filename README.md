@@ -12,6 +12,11 @@
 ## Возможности
 
 - **GUI на tkinter** — список аккаунтов, двойной клик = вход.
+- **Два способа входа:**
+  - **Войти (браузер)** — логин на сайте Steam через автоматизированный Chrome.
+  - **Войти в клиент** — вход в десктопный клиент Steam: программа закрывает
+    текущий Steam, запускает его с `-login` (минуя экран "Кто играет?" и форму)
+    и автоматически вводит Steam Guard код.
 - **Два источника 2FA-кодов:**
   - `mafile` — программа сама генерирует Steam Guard код из `shared_secret`
     внутри `.maFile` (тот же TOTP-алгоритм, что и в NebulaAuth/SDA).
@@ -139,7 +144,8 @@ python E:\proj1\main.py
   ],
   "settings": {
     "chrome_profiles_dir": "chrome_profiles",
-    "nebula_auth_path": "C:\\Program Files\\NebulaAuth\\NebulaAuth.exe"
+    "nebula_auth_path": "C:\\Program Files\\NebulaAuth\\NebulaAuth.exe",
+    "steam_exe_path": ""
   }
 }
 ```
@@ -161,6 +167,7 @@ python E:\proj1\main.py
 | --- | --- |
 | `chrome_profiles_dir` | Папка для профилей Chrome (по умолчанию `chrome_profiles`) |
 | `nebula_auth_path` | Полный путь к `NebulaAuth.exe` |
+| `steam_exe_path` | Путь к `steam.exe`. Пусто → авто-поиск через реестр и стандартные папки |
 
 ---
 

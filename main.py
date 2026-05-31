@@ -15,6 +15,7 @@ from tkinter import filedialog, messagebox, ttk
 from mafile import code_from_mafile, seconds_until_next_code
 from nebula import get_code_from_clipboard, get_code_from_nebula, launch_nebula
 from steam_browser import _is_window_closed_error, login, make_driver
+from steam_client import find_steam_exe, login_steam_client
 
 
 BASE_DIR = Path(__file__).parent
@@ -28,6 +29,7 @@ def load_config():
             "settings": {
                 "chrome_profiles_dir": "chrome_profiles",
                 "nebula_auth_path": "",
+                "steam_exe_path": "",
             },
         }
     return json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
@@ -43,7 +45,7 @@ class App:
     def __init__(self, root):
         self.root = root
         root.title("Steam Account Switcher")
-        root.geometry("780x440")
+        root.geometry("900x460")
 
         self.config = load_config()
         self._active_drivers = []
@@ -66,7 +68,8 @@ class App:
 
         btns = ttk.Frame(root, padding=(10, 0, 10, 5))
         btns.pack(fill="x")
-        ttk.Button(btns, text="Войти", command=self.login_selected).pack(side="left", padx=3)
+        ttk.Button(btns, text="Войти (браузер)", command=self.login_selected).pack(side="left", padx=3)
+        ttk.Button(btns, text="Войти в клиент", command=self.login_client_selected).pack(side="left", padx=3)
         ttk.Button(btns, text="Добавить", command=self.add_account).pack(side="left", padx=3)
         ttk.Button(btns, text="Изменить", command=self.edit_account).pack(side="left", padx=3)
         ttk.Button(btns, text="Удалить", command=self.delete_account).pack(side="left", padx=3)
@@ -119,52 +122,70 @@ class App:
             return
         threading.Thread(target=self._do_login, args=(acc,), daemon=True).start()
 
+    def login_client_selected(self):
+        acc = self.get_selected()
+        if not acc:
+            messagebox.showwarning("Внимание", "Выбери аккаунт в списке")
+            return
+        threading.Thread(target=self._do_login_client, args=(acc,), daemon=True).start()
+
+    def _build_get_code(self, acc):
+        """Возвращает функцию get_code() для аккаунта (mafile или nebula).
+
+        Используется и браузерным, и клиентским входом.
+        """
+        source = acc.get("guard_source", "mafile")
+
+        if source == "mafile":
+            mafile_path = acc.get("mafile")
+            if not mafile_path:
+                raise ValueError("Для guard_source=mafile нужно указать путь к .maFile")
+            full_path = mafile_path if Path(mafile_path).is_absolute() else BASE_DIR / mafile_path
+            if not Path(full_path).exists():
+                raise FileNotFoundError(f"mafile не найден: {full_path}")
+
+            def get_code():
+                secs = seconds_until_next_code()
+                if secs < 5:
+                    self.set_status(f"[{acc['label']}] жду свежий код ({secs}с)...")
+                    time.sleep(secs + 1)
+                return code_from_mafile(full_path)
+
+            return get_code
+
+        if source == "nebula":
+            nebula_path = self.config.get("settings", {}).get("nebula_auth_path") or ""
+            if nebula_path and Path(nebula_path).exists():
+                self.set_status(f"[{acc['label']}] открываю NebulaAuth...")
+                try:
+                    launch_nebula(nebula_path)
+                    time.sleep(1.5)  # окну нужно время на запуск
+                except Exception as e:
+                    self.set_status(f"NebulaAuth не запустился: {e}")
+
+            # Имя в списке NebulaAuth: можно переопределить, иначе берём логин
+            nebula_account = (acc.get("nebula_account_name") or "").strip() or acc["login"]
+
+            def get_code():
+                self.set_status(f"[{acc['label']}] забираю код из NebulaAuth...")
+                try:
+                    return get_code_from_nebula(nebula_account, timeout=15)
+                except Exception as e:
+                    # Если автоматика не сработала — даём шанс ручному копированию
+                    self.set_status(
+                        f"[{acc['label']}] автоматика не сработала ({e}). "
+                        f"Скопируй код руками (60с)..."
+                    )
+                    return get_code_from_clipboard(timeout=60)
+
+            return get_code
+
+        raise ValueError(f"Неизвестный guard_source: {source}")
+
     def _do_login(self, acc):
         try:
             self.set_status(f"[{acc['label']}] подготовка...")
-            source = acc.get("guard_source", "mafile")
-
-            if source == "mafile":
-                mafile_path = acc.get("mafile")
-                if not mafile_path:
-                    raise ValueError("Для guard_source=mafile нужно указать путь к .maFile")
-                full_path = mafile_path if Path(mafile_path).is_absolute() else BASE_DIR / mafile_path
-                if not Path(full_path).exists():
-                    raise FileNotFoundError(f"mafile не найден: {full_path}")
-
-                def get_code():
-                    secs = seconds_until_next_code()
-                    if secs < 5:
-                        self.set_status(f"[{acc['label']}] жду свежий код ({secs}с)...")
-                        time.sleep(secs + 1)
-                    return code_from_mafile(full_path)
-
-            elif source == "nebula":
-                nebula_path = self.config.get("settings", {}).get("nebula_auth_path") or ""
-                if nebula_path and Path(nebula_path).exists():
-                    self.set_status(f"[{acc['label']}] открываю NebulaAuth...")
-                    try:
-                        launch_nebula(nebula_path)
-                        time.sleep(1.5)  # окну нужно время на запуск
-                    except Exception as e:
-                        self.set_status(f"NebulaAuth не запустился: {e}")
-
-                # Имя в списке NebulaAuth: можно переопределить, иначе берём логин
-                nebula_account = (acc.get("nebula_account_name") or "").strip() or acc["login"]
-
-                def get_code():
-                    self.set_status(f"[{acc['label']}] забираю код из NebulaAuth...")
-                    try:
-                        return get_code_from_nebula(nebula_account, timeout=15)
-                    except Exception as e:
-                        # Если автоматика не сработала — даём шанс ручному копированию
-                        self.set_status(
-                            f"[{acc['label']}] автоматика не сработала ({e}). "
-                            f"Скопируй код руками (60с)..."
-                        )
-                        return get_code_from_clipboard(timeout=60)
-            else:
-                raise ValueError(f"Неизвестный guard_source: {source}")
+            get_code = self._build_get_code(acc)
 
             profiles_root = self.config.get("settings", {}).get("chrome_profiles_dir", "chrome_profiles")
             profile = BASE_DIR / profiles_root / _safe_filename(acc["label"])
@@ -185,6 +206,31 @@ class App:
             if _is_window_closed_error(e):
                 self.set_status(f"[{acc['label']}] окно браузера закрыто")
                 return
+            self.set_status(f"Ошибка: {e}")
+            messagebox.showerror("Ошибка", f"{acc.get('label','?')}: {e}")
+
+    def _do_login_client(self, acc):
+        try:
+            self.set_status(f"[{acc['label']}] подготовка (клиент Steam)...")
+            steam_exe = find_steam_exe(
+                self.config.get("settings", {}).get("steam_exe_path")
+            )
+            if not steam_exe:
+                raise FileNotFoundError(
+                    "steam.exe не найден. Укажи путь к Steam в Настройках."
+                )
+
+            get_code = self._build_get_code(acc)
+
+            login_steam_client(
+                steam_exe,
+                acc["login"],
+                acc["password"],
+                get_code,
+                status_callback=lambda t: self.set_status(f"[{acc['label']}] {t}"),
+            )
+            self.set_status(f"[{acc['label']}] вход в клиент завершён")
+        except Exception as e:
             self.set_status(f"Ошибка: {e}")
             messagebox.showerror("Ошибка", f"{acc.get('label','?')}: {e}")
 
@@ -345,7 +391,7 @@ class SettingsDialog:
 
         win = tk.Toplevel(parent)
         win.title("Настройки")
-        win.geometry("560x180")
+        win.geometry("560x230")
         win.transient(parent)
         win.grab_set()
         self.win = win
@@ -363,8 +409,22 @@ class SettingsDialog:
         ttk.Button(nebula_frame, text="...", command=self._browse_nebula, width=3).pack(side="left", padx=3)
         nebula_frame.grid(row=1, column=1, padx=10, pady=6, sticky="ew")
 
+        ttk.Label(win, text="Путь к steam.exe:").grid(row=2, column=0, sticky="w", padx=10, pady=6)
+        steam_frame = ttk.Frame(win)
+        self.steam_var = tk.StringVar(value=settings.get("steam_exe_path", ""))
+        ttk.Entry(steam_frame, textvariable=self.steam_var).pack(side="left", fill="x", expand=True)
+        ttk.Button(steam_frame, text="...", command=self._browse_steam, width=3).pack(side="left", padx=3)
+        steam_frame.grid(row=2, column=1, padx=10, pady=6, sticky="ew")
+
+        hint = ttk.Label(
+            win,
+            text="Путь к steam.exe — оставь пустым для авто-поиска в стандартных папках.",
+            foreground="gray",
+        )
+        hint.grid(row=3, column=0, columnspan=2, padx=10, pady=2, sticky="w")
+
         btns = ttk.Frame(win)
-        btns.grid(row=2, column=0, columnspan=2, pady=15)
+        btns.grid(row=4, column=0, columnspan=2, pady=15)
         ttk.Button(btns, text="Сохранить", command=self._save).pack(side="left", padx=5)
         ttk.Button(btns, text="Отмена", command=win.destroy).pack(side="left", padx=5)
 
@@ -377,10 +437,20 @@ class SettingsDialog:
         if path:
             self.nebula_var.set(path)
 
+    def _browse_steam(self):
+        path = filedialog.askopenfilename(
+            title="steam.exe",
+            filetypes=[("Программы", "*.exe"), ("Все файлы", "*.*")],
+            parent=self.win,
+        )
+        if path:
+            self.steam_var.set(path)
+
     def _save(self):
         self.on_save({
             "chrome_profiles_dir": self.profiles_var.get().strip() or "chrome_profiles",
             "nebula_auth_path": self.nebula_var.get().strip(),
+            "steam_exe_path": self.steam_var.get().strip(),
         })
         self.win.destroy()
 

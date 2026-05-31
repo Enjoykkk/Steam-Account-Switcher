@@ -12,6 +12,11 @@ in its own Chrome profile so sessions never conflict.
 ## Features
 
 - **tkinter GUI** — account list, double-click to login.
+- **Two login methods:**
+  - **Login (browser)** — logs into the Steam website via automated Chrome.
+  - **Login to client** — logs into the Steam desktop client: the program closes
+    the running Steam, relaunches it with `-login` (skipping the "Who's playing?"
+    picker and the login form) and auto-types the Steam Guard code.
 - **Two 2FA code sources:**
   - `mafile` — the program generates a Steam Guard code from the `shared_secret`
     inside the `.maFile` (same TOTP algorithm used by NebulaAuth/SDA).
@@ -139,7 +144,8 @@ python E:\proj1\main.py
   ],
   "settings": {
     "chrome_profiles_dir": "chrome_profiles",
-    "nebula_auth_path": "C:\\Program Files\\NebulaAuth\\NebulaAuth.exe"
+    "nebula_auth_path": "C:\\Program Files\\NebulaAuth\\NebulaAuth.exe",
+    "steam_exe_path": ""
   }
 }
 ```
@@ -161,6 +167,7 @@ python E:\proj1\main.py
 | --- | --- |
 | `chrome_profiles_dir` | Folder for Chrome profiles (default: `chrome_profiles`) |
 | `nebula_auth_path` | Full path to `NebulaAuth.exe` |
+| `steam_exe_path` | Path to `steam.exe`. Empty → auto-detect via registry and standard folders |
 
 ---
 

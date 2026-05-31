@@ -3,6 +3,10 @@ accounts.json
 mafiles/
 chrome_profiles/
 
+# Дампы интерфейса Steam (содержат имена аккаунтов)
+steam_dump.txt
+dump_*.txt
+
 # === ИКОНКА (бинарник, не код) ===
 icon.ico
 
