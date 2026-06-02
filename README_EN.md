@@ -1,6 +1,6 @@
 # Steam Account Switcher
 
-[🇷🇺 Русский](README.md) | 🇬🇧 English
+[🇨🇳 简体中文](README.md) | 🇬🇧 English
 
 A local Windows utility for quickly switching between Steam accounts. The program
 automatically fills in login/password in the browser, retrieves the Steam Guard code

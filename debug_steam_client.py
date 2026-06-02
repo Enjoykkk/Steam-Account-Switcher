@@ -31,7 +31,7 @@ def dump_window(w, max_items=800):
     try:
         descendants = w.descendants()
     except Exception as e:
-        out(f"  !! не удалось получить descendants: {e}")
+        out(f"  !! 无法获取 descendants: {e}")
         return
 
     count = 0
@@ -53,12 +53,12 @@ def dump_window(w, max_items=800):
             out(f"  [{ct:10}] vis={visible} name={name!r:42} id={aid!r} {coords}")
             count += 1
             if count >= max_items:
-                out("  ...(обрезано)")
+                out("  ...(已截断)")
                 break
         except Exception:
             continue
 
-    out(f"-- всего показано контролов: {count} --")
+    out(f"-- 共显示控件数: {count} --")
     out("")
 
 
@@ -70,14 +70,14 @@ def main():
 
     pids = sc._all_steam_pids()
     if not pids:
-        out("Steam не запущен — запусти его и открой нужный экран, потом повтори.")
+        out("Steam 未运行——请先启动并打开目标页面后重试。")
         _flush()
         return
 
     try:
         from pywinauto import Desktop
     except ImportError:
-        out("pywinauto не установлен: pip install pywinauto")
+        out("pywinauto 未安装: pip install pywinauto")
         _flush()
         return
 
@@ -91,14 +91,14 @@ def main():
                 continue
             found += 1
             pname = name_map.get(wpid, "?")
-            out(f">>> Окно процесса {pname} (pid={wpid}):")
+            out(f">>> 进程窗口 {pname} (pid={wpid}):")
             dump_window(w)
         except Exception:
             continue
 
     if not found:
-        out("Окон процессов Steam (steam.exe/steamwebhelper.exe) не найдено среди видимых.")
-        out("Перечисляю ВСЕ видимые окна верхнего уровня (для поиска UI Steam):\n")
+        out("在可见窗口中未找到 Steam 进程窗口（steam.exe/steamwebhelper.exe）。")
+        out("列出所有可见顶级窗口（用于定位 Steam UI）：\n")
         for w in Desktop(backend="uia").windows():
             try:
                 if not w.is_visible():
@@ -117,9 +117,9 @@ def main():
 def _flush():
     try:
         OUT_PATH.write_text("\n".join(_lines), encoding="utf-8")
-        print(f"\n[Результат записан в {OUT_PATH}]")
+        print(f"\n[结果已写入 {OUT_PATH}]")
     except Exception as e:
-        print(f"Не удалось записать файл: {e}")
+        print(f"写入文件失败: {e}")
 
 
 if __name__ == "__main__":

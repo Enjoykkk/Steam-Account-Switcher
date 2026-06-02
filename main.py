@@ -1,8 +1,8 @@
-"""Steam Account Switcher — GUI для быстрого логина в Steam-аккаунты.
+"""Steam Account Switcher —— 用于快速登录 Steam 账号的 GUI。
 
-Хранит логин/пароль/путь к mafile в accounts.json рядом с main.py.
-Steam Guard код берёт либо из mafile (TOTP), либо из NebulaAuth (через буфер обмена).
-Каждый аккаунт логинится в свой профиль Chrome чтобы сессии не конфликтовали.
+登录名/密码/mafile 路径保存在与 main.py 同目录的 accounts.json 中。
+Steam Guard 代码可来自 mafile（TOTP）或 NebulaAuth（通过剪贴板）。
+每个账号使用独立的 Chrome 配置目录，避免会话冲突。
 """
 
 import json
@@ -55,8 +55,8 @@ class App:
 
         cols = ("label", "login", "source", "mafile")
         self.tree = ttk.Treeview(main, columns=cols, show="headings", height=14)
-        self.tree.heading("label", text="Название")
-        self.tree.heading("login", text="Логин")
+        self.tree.heading("label", text="名称")
+        self.tree.heading("login", text="登录名")
         self.tree.heading("source", text="2FA")
         self.tree.heading("mafile", text="mafile")
         self.tree.column("label", width=160)
@@ -68,16 +68,16 @@ class App:
 
         btns = ttk.Frame(root, padding=(10, 0, 10, 5))
         btns.pack(fill="x")
-        ttk.Button(btns, text="Войти (браузер)", command=self.login_selected).pack(side="left", padx=3)
-        ttk.Button(btns, text="Войти в клиент", command=self.login_client_selected).pack(side="left", padx=3)
-        ttk.Button(btns, text="Добавить", command=self.add_account).pack(side="left", padx=3)
-        ttk.Button(btns, text="Изменить", command=self.edit_account).pack(side="left", padx=3)
-        ttk.Button(btns, text="Удалить", command=self.delete_account).pack(side="left", padx=3)
-        ttk.Button(btns, text="Открыть NebulaAuth", command=self.open_nebula).pack(side="left", padx=3)
-        ttk.Button(btns, text="Настройки", command=self.open_settings).pack(side="left", padx=3)
-        ttk.Button(btns, text="Обновить", command=self.refresh).pack(side="left", padx=3)
+        ttk.Button(btns, text="登录（浏览器）", command=self.login_selected).pack(side="left", padx=3)
+        ttk.Button(btns, text="登录客户端", command=self.login_client_selected).pack(side="left", padx=3)
+        ttk.Button(btns, text="添加", command=self.add_account).pack(side="left", padx=3)
+        ttk.Button(btns, text="编辑", command=self.edit_account).pack(side="left", padx=3)
+        ttk.Button(btns, text="删除", command=self.delete_account).pack(side="left", padx=3)
+        ttk.Button(btns, text="打开 NebulaAuth", command=self.open_nebula).pack(side="left", padx=3)
+        ttk.Button(btns, text="设置", command=self.open_settings).pack(side="left", padx=3)
+        ttk.Button(btns, text="刷新", command=self.refresh).pack(side="left", padx=3)
 
-        self.status = ttk.Label(root, text="Готов", anchor="w", padding=5, relief="sunken")
+        self.status = ttk.Label(root, text="就绪", anchor="w", padding=5, relief="sunken")
         self.status.pack(fill="x", side="bottom")
 
         self.refresh()
@@ -118,36 +118,36 @@ class App:
     def login_selected(self):
         acc = self.get_selected()
         if not acc:
-            messagebox.showwarning("Внимание", "Выбери аккаунт в списке")
+            messagebox.showwarning("提示", "请在列表中选择账号")
             return
         threading.Thread(target=self._do_login, args=(acc,), daemon=True).start()
 
     def login_client_selected(self):
         acc = self.get_selected()
         if not acc:
-            messagebox.showwarning("Внимание", "Выбери аккаунт в списке")
+            messagebox.showwarning("提示", "请在列表中选择账号")
             return
         threading.Thread(target=self._do_login_client, args=(acc,), daemon=True).start()
 
     def _build_get_code(self, acc):
-        """Возвращает функцию get_code() для аккаунта (mafile или nebula).
+        """返回账号对应的 get_code() 函数（mafile 或 nebula）。
 
-        Используется и браузерным, и клиентским входом.
+        浏览器登录和客户端登录都会复用该函数。
         """
         source = acc.get("guard_source", "mafile")
 
         if source == "mafile":
             mafile_path = acc.get("mafile")
             if not mafile_path:
-                raise ValueError("Для guard_source=mafile нужно указать путь к .maFile")
+                raise ValueError("当 guard_source=mafile 时，必须提供 .maFile 路径")
             full_path = mafile_path if Path(mafile_path).is_absolute() else BASE_DIR / mafile_path
             if not Path(full_path).exists():
-                raise FileNotFoundError(f"mafile не найден: {full_path}")
+                raise FileNotFoundError(f"未找到 mafile: {full_path}")
 
             def get_code():
                 secs = seconds_until_next_code()
                 if secs < 5:
-                    self.set_status(f"[{acc['label']}] жду свежий код ({secs}с)...")
+                    self.set_status(f"[{acc['label']}] 等待新验证码（{secs}秒）...")
                     time.sleep(secs + 1)
                 return code_from_mafile(full_path)
 
@@ -156,41 +156,41 @@ class App:
         if source == "nebula":
             nebula_path = self.config.get("settings", {}).get("nebula_auth_path") or ""
             if nebula_path and Path(nebula_path).exists():
-                self.set_status(f"[{acc['label']}] открываю NebulaAuth...")
+                self.set_status(f"[{acc['label']}] 正在打开 NebulaAuth...")
                 try:
                     launch_nebula(nebula_path)
-                    time.sleep(1.5)  # окну нужно время на запуск
+                    time.sleep(1.5)  # 窗口启动需要一点时间
                 except Exception as e:
-                    self.set_status(f"NebulaAuth не запустился: {e}")
+                    self.set_status(f"NebulaAuth 启动失败: {e}")
 
-            # Имя в списке NebulaAuth: можно переопределить, иначе берём логин
+            # NebulaAuth 列表中的账号名：可单独指定，否则使用 Steam 登录名
             nebula_account = (acc.get("nebula_account_name") or "").strip() or acc["login"]
 
             def get_code():
-                self.set_status(f"[{acc['label']}] забираю код из NebulaAuth...")
+                self.set_status(f"[{acc['label']}] 正在从 NebulaAuth 获取代码...")
                 try:
                     return get_code_from_nebula(nebula_account, timeout=15)
                 except Exception as e:
-                    # Если автоматика не сработала — даём шанс ручному копированию
+                    # 自动流程失败时，允许手动复制代码
                     self.set_status(
-                        f"[{acc['label']}] автоматика не сработала ({e}). "
-                        f"Скопируй код руками (60с)..."
+                        f"[{acc['label']}] 自动流程失败（{e}）。"
+                        f"请手动复制代码（60秒）..."
                     )
                     return get_code_from_clipboard(timeout=60)
 
             return get_code
 
-        raise ValueError(f"Неизвестный guard_source: {source}")
+        raise ValueError(f"未知 guard_source: {source}")
 
     def _do_login(self, acc):
         try:
-            self.set_status(f"[{acc['label']}] подготовка...")
+            self.set_status(f"[{acc['label']}] 准备中...")
             get_code = self._build_get_code(acc)
 
             profiles_root = self.config.get("settings", {}).get("chrome_profiles_dir", "chrome_profiles")
             profile = BASE_DIR / profiles_root / _safe_filename(acc["label"])
 
-            self.set_status(f"[{acc['label']}] запускаю Chrome...")
+            self.set_status(f"[{acc['label']}] 正在启动 Chrome...")
             driver = make_driver(profile_dir=str(profile))
             self._active_drivers.append(driver)
 
@@ -201,23 +201,23 @@ class App:
                 get_code,
                 status_callback=lambda t: self.set_status(f"[{acc['label']}] {t}"),
             )
-            self.set_status(f"[{acc['label']}] готово")
+            self.set_status(f"[{acc['label']}] 完成")
         except Exception as e:
             if _is_window_closed_error(e):
-                self.set_status(f"[{acc['label']}] окно браузера закрыто")
+                self.set_status(f"[{acc['label']}] 浏览器窗口已关闭")
                 return
-            self.set_status(f"Ошибка: {e}")
-            messagebox.showerror("Ошибка", f"{acc.get('label','?')}: {e}")
+            self.set_status(f"错误: {e}")
+            messagebox.showerror("错误", f"{acc.get('label','?')}: {e}")
 
     def _do_login_client(self, acc):
         try:
-            self.set_status(f"[{acc['label']}] подготовка (клиент Steam)...")
+            self.set_status(f"[{acc['label']}] 准备中（Steam 客户端）...")
             steam_exe = find_steam_exe(
                 self.config.get("settings", {}).get("steam_exe_path")
             )
             if not steam_exe:
                 raise FileNotFoundError(
-                    "steam.exe не найден. Укажи путь к Steam в Настройках."
+                    "未找到 steam.exe。请在“设置”中指定 Steam 路径。"
                 )
 
             get_code = self._build_get_code(acc)
@@ -229,10 +229,10 @@ class App:
                 get_code,
                 status_callback=lambda t: self.set_status(f"[{acc['label']}] {t}"),
             )
-            self.set_status(f"[{acc['label']}] вход в клиент завершён")
+            self.set_status(f"[{acc['label']}] 客户端登录已完成")
         except Exception as e:
-            self.set_status(f"Ошибка: {e}")
-            messagebox.showerror("Ошибка", f"{acc.get('label','?')}: {e}")
+            self.set_status(f"错误: {e}")
+            messagebox.showerror("错误", f"{acc.get('label','?')}: {e}")
 
     def add_account(self):
         AccountDialog(self.root, on_save=self._on_account_saved)
@@ -240,7 +240,7 @@ class App:
     def edit_account(self):
         idx = self.get_selected_index()
         if idx is None:
-            messagebox.showwarning("Внимание", "Выбери аккаунт")
+            messagebox.showwarning("提示", "请选择账号")
             return
         AccountDialog(
             self.root,
@@ -261,7 +261,7 @@ class App:
         if idx is None:
             return
         acc = self.config["accounts"][idx]
-        if messagebox.askyesno("Удалить", f"Удалить аккаунт '{acc['label']}'?"):
+        if messagebox.askyesno("删除", f"要删除账号“{acc['label']}”吗？"):
             del self.config["accounts"][idx]
             save_config(self.config)
             self.refresh()
@@ -269,13 +269,13 @@ class App:
     def open_nebula(self):
         path = self.config.get("settings", {}).get("nebula_auth_path") or ""
         if not path:
-            messagebox.showinfo("NebulaAuth", "Путь к NebulaAuth не задан. Открой 'Настройки'.")
+            messagebox.showinfo("NebulaAuth", "尚未设置 NebulaAuth 路径。请打开“设置”。")
             return
         try:
             launch_nebula(path)
-            self.set_status("NebulaAuth запущен")
+            self.set_status("NebulaAuth 已启动")
         except Exception as e:
-            messagebox.showerror("Ошибка", str(e))
+            messagebox.showerror("错误", str(e))
 
     def open_settings(self):
         SettingsDialog(self.root, self.config, on_save=self._on_settings_saved)
@@ -283,7 +283,7 @@ class App:
     def _on_settings_saved(self, settings):
         self.config["settings"] = settings
         save_config(self.config)
-        self.set_status("Настройки сохранены")
+        self.set_status("设置已保存")
 
 
 class AccountDialog:
@@ -291,7 +291,7 @@ class AccountDialog:
         self.on_save = on_save
 
         win = tk.Toplevel(parent)
-        win.title("Аккаунт")
+        win.title("账号")
         win.geometry("520x380")
         win.transient(parent)
         win.grab_set()
@@ -306,21 +306,21 @@ class AccountDialog:
         win.columnconfigure(1, weight=1)
 
         self.label_var = tk.StringVar(value=initial.get("label", ""))
-        add_row(0, "Название:", ttk.Entry(win, textvariable=self.label_var))
+        add_row(0, "名称：", ttk.Entry(win, textvariable=self.label_var))
 
         self.login_var = tk.StringVar(value=initial.get("login", ""))
-        add_row(1, "Логин Steam:", ttk.Entry(win, textvariable=self.login_var))
+        add_row(1, "Steam 登录名：", ttk.Entry(win, textvariable=self.login_var))
 
         self.password_var = tk.StringVar(value=initial.get("password", ""))
         pwd_entry = ttk.Entry(win, textvariable=self.password_var, show="*")
-        add_row(2, "Пароль:", pwd_entry)
+        add_row(2, "密码：", pwd_entry)
 
-        # mafile с кнопкой обзора
+        # mafile 路径 + 浏览按钮
         mafile_frame = ttk.Frame(win)
         self.mafile_var = tk.StringVar(value=initial.get("mafile") or "")
         ttk.Entry(mafile_frame, textvariable=self.mafile_var).pack(side="left", fill="x", expand=True)
         ttk.Button(mafile_frame, text="...", command=self._browse_mafile, width=3).pack(side="left", padx=3)
-        add_row(3, "Путь к .maFile:", mafile_frame)
+        add_row(3, ".maFile 路径：", mafile_frame)
 
         self.source_var = tk.StringVar(value=initial.get("guard_source", "mafile"))
         source_combo = ttk.Combobox(
@@ -329,17 +329,17 @@ class AccountDialog:
             values=["mafile", "nebula"],
             state="readonly",
         )
-        add_row(4, "Источник 2FA:", source_combo)
+        add_row(4, "2FA 来源：", source_combo)
 
         self.nebula_name_var = tk.StringVar(value=initial.get("nebula_account_name") or "")
-        add_row(5, "Имя в NebulaAuth:", ttk.Entry(win, textvariable=self.nebula_name_var))
+        add_row(5, "NebulaAuth 中的名称：", ttk.Entry(win, textvariable=self.nebula_name_var))
 
         hint = ttk.Label(
             win,
             text=(
-                "mafile — код генерируется автоматически.\n"
-                "nebula — клик по аккаунту и коду делается автоматом.\n"
-                "Имя в NebulaAuth — оставь пустым если совпадает с логином Steam."
+                "mafile —— 自动生成代码。\n"
+                "nebula —— 自动点击账号并复制代码。\n"
+                "若 NebulaAuth 中名称与 Steam 登录名一致，此项可留空。"
             ),
             foreground="gray",
             justify="left",
@@ -348,13 +348,13 @@ class AccountDialog:
 
         btns = ttk.Frame(win)
         btns.grid(row=7, column=0, columnspan=2, pady=15)
-        ttk.Button(btns, text="Сохранить", command=self._save).pack(side="left", padx=5)
-        ttk.Button(btns, text="Отмена", command=win.destroy).pack(side="left", padx=5)
+        ttk.Button(btns, text="保存", command=self._save).pack(side="left", padx=5)
+        ttk.Button(btns, text="取消", command=win.destroy).pack(side="left", padx=5)
 
     def _browse_mafile(self):
         path = filedialog.askopenfilename(
-            title="Выбери .maFile",
-            filetypes=[("Steam mobile authenticator", "*.maFile *.mafile"), ("Все файлы", "*.*")],
+            title="选择 .maFile",
+            filetypes=[("Steam mobile authenticator", "*.maFile *.mafile"), ("所有文件", "*.*")],
             parent=self.win,
         )
         if not path:
@@ -367,10 +367,10 @@ class AccountDialog:
 
     def _save(self):
         if not self.label_var.get().strip():
-            messagebox.showwarning("Внимание", "Введи название", parent=self.win)
+            messagebox.showwarning("提示", "请输入名称", parent=self.win)
             return
         if not self.login_var.get().strip():
-            messagebox.showwarning("Внимание", "Введи логин Steam", parent=self.win)
+            messagebox.showwarning("提示", "请输入 Steam 登录名", parent=self.win)
             return
         data = {
             "label": self.label_var.get().strip(),
@@ -390,7 +390,7 @@ class SettingsDialog:
         settings = config.get("settings", {})
 
         win = tk.Toplevel(parent)
-        win.title("Настройки")
+        win.title("设置")
         win.geometry("560x230")
         win.transient(parent)
         win.grab_set()
@@ -398,18 +398,18 @@ class SettingsDialog:
 
         win.columnconfigure(1, weight=1)
 
-        ttk.Label(win, text="Папка профилей Chrome:").grid(row=0, column=0, sticky="w", padx=10, pady=6)
+        ttk.Label(win, text="Chrome 配置目录：").grid(row=0, column=0, sticky="w", padx=10, pady=6)
         self.profiles_var = tk.StringVar(value=settings.get("chrome_profiles_dir", "chrome_profiles"))
         ttk.Entry(win, textvariable=self.profiles_var).grid(row=0, column=1, padx=10, pady=6, sticky="ew")
 
-        ttk.Label(win, text="Путь к NebulaAuth.exe:").grid(row=1, column=0, sticky="w", padx=10, pady=6)
+        ttk.Label(win, text="NebulaAuth.exe 路径：").grid(row=1, column=0, sticky="w", padx=10, pady=6)
         nebula_frame = ttk.Frame(win)
         self.nebula_var = tk.StringVar(value=settings.get("nebula_auth_path", ""))
         ttk.Entry(nebula_frame, textvariable=self.nebula_var).pack(side="left", fill="x", expand=True)
         ttk.Button(nebula_frame, text="...", command=self._browse_nebula, width=3).pack(side="left", padx=3)
         nebula_frame.grid(row=1, column=1, padx=10, pady=6, sticky="ew")
 
-        ttk.Label(win, text="Путь к steam.exe:").grid(row=2, column=0, sticky="w", padx=10, pady=6)
+        ttk.Label(win, text="steam.exe 路径：").grid(row=2, column=0, sticky="w", padx=10, pady=6)
         steam_frame = ttk.Frame(win)
         self.steam_var = tk.StringVar(value=settings.get("steam_exe_path", ""))
         ttk.Entry(steam_frame, textvariable=self.steam_var).pack(side="left", fill="x", expand=True)
@@ -418,20 +418,20 @@ class SettingsDialog:
 
         hint = ttk.Label(
             win,
-            text="Путь к steam.exe — оставь пустым для авто-поиска в стандартных папках.",
+            text="steam.exe 路径留空时，将在注册表和默认目录中自动查找。",
             foreground="gray",
         )
         hint.grid(row=3, column=0, columnspan=2, padx=10, pady=2, sticky="w")
 
         btns = ttk.Frame(win)
         btns.grid(row=4, column=0, columnspan=2, pady=15)
-        ttk.Button(btns, text="Сохранить", command=self._save).pack(side="left", padx=5)
-        ttk.Button(btns, text="Отмена", command=win.destroy).pack(side="left", padx=5)
+        ttk.Button(btns, text="保存", command=self._save).pack(side="left", padx=5)
+        ttk.Button(btns, text="取消", command=win.destroy).pack(side="left", padx=5)
 
     def _browse_nebula(self):
         path = filedialog.askopenfilename(
             title="NebulaAuth.exe",
-            filetypes=[("Программы", "*.exe"), ("Все файлы", "*.*")],
+            filetypes=[("程序", "*.exe"), ("所有文件", "*.*")],
             parent=self.win,
         )
         if path:
@@ -440,7 +440,7 @@ class SettingsDialog:
     def _browse_steam(self):
         path = filedialog.askopenfilename(
             title="steam.exe",
-            filetypes=[("Программы", "*.exe"), ("Все файлы", "*.*")],
+            filetypes=[("程序", "*.exe"), ("所有文件", "*.*")],
             parent=self.win,
         )
         if path:
