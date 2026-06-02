@@ -30,7 +30,7 @@ $Shortcut.Arguments = '"' + $MainScript + '"'
 $Shortcut.WorkingDirectory = $ProjectDir
 $Shortcut.Description = 'Steam Account Switcher'
 
-# Используем icon.ico из проекта, если он есть; иначе дефолтная иконка python
+# Use icon.ico from the project if present; otherwise use the default Python icon
 $IconPath = Join-Path $ProjectDir 'icon.ico'
 if (Test-Path $IconPath) {
     $Shortcut.IconLocation = $IconPath

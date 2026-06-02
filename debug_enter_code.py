@@ -10,14 +10,14 @@ driver.get("https://store.steampowered.com/login/")
 
 print()
 print("=" * 70)
-print("1. Введи логин и пароль в окне Chrome")
-print("2. Дождись экрана с 'Use the Steam Mobile App to confirm your sign in'")
-print("3. Вернись сюда и нажми Enter")
+print("1. 在 Chrome 窗口中输入登录名和密码")
+print("2. 等到出现 'Use the Steam Mobile App to confirm your sign in' 页面")
+print("3. 回到这里并按 Enter")
 print("=" * 70)
 input()
 
 js = r"""
-const phrases = ['enter a code', 'введите код', 'ввести код'];
+const phrases = ['enter a code', '输入代码', '请输入代码'];
 
 function directText(el) {
     let s = '';
@@ -49,13 +49,13 @@ for (const el of all) {
 return results;
 """
 
-print("\nИщу элементы с текстом 'Enter a code'...\n")
+print("\n正在查找包含 'Enter a code' 文本的元素...\n")
 results = driver.execute_script(js)
 if not results:
-    print("НИЧЕГО НЕ НАЙДЕНО. Возможно ты не на нужном экране.")
+    print("未找到任何结果。你可能不在正确的页面。")
 else:
     for i, r in enumerate(results):
-        print(f"--- Результат {i + 1} ---")
+        print(f"--- 结果 {i + 1} ---")
         print(f"  tag:       {r['tag']}")
         print(f"  text:      {r['text']!r}")
         print(f"  role:      {r['role']}")
@@ -68,6 +68,6 @@ else:
             print(f"  parentHTML:{r['parentHTML'][:300]}")
         print()
 
-print("Нажми Enter чтобы закрыть браузер")
+print("按 Enter 关闭浏览器")
 input()
 driver.quit()

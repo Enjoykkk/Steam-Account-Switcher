@@ -1,16 +1,16 @@
-# === СЕКРЕТНЫЕ ДАННЫЕ ===
+# === 敏感数据 ===
 accounts.json
 mafiles/
 chrome_profiles/
 
-# Дампы интерфейса Steam (содержат имена аккаунтов)
+# Steam 界面转储（包含账号名称）
 steam_dump.txt
 dump_*.txt
 
-# === ИКОНКА (бинарник, не код) ===
+# === 图标（二进制文件，非代码）===
 icon.ico
 
-# === СЛУЖЕБНЫЕ ФАЙЛЫ (не часть проекта) ===
+# === 工具文件（非项目内容）===
 .claude/
 settings.json
 export_templates.json
@@ -27,7 +27,7 @@ dist/
 build/
 .eggs/
 
-# === ВИРТУАЛЬНЫЕ ОКРУЖЕНИЯ ===
+# === 虚拟环境 ===
 venv/
 .venv/
 env/
@@ -44,5 +44,5 @@ Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 
-# === ЛОГИ ===
+# === 日志 ===
 *.log

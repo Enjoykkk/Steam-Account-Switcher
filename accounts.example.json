@@ -1,14 +1,14 @@
 {
   "accounts": [
     {
-      "label": "Основной",
+      "label": "主号",
       "login": "my_steam_login",
       "password": "my_password",
       "mafile": "mafiles/main.maFile",
       "guard_source": "mafile"
     },
     {
-      "label": "Торговый",
+      "label": "交易号",
       "login": "trader_login",
       "password": "trader_password",
       "mafile": null,
